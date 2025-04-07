@@ -53,7 +53,10 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
       case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ParentSettingsScreen()),
+          MaterialPageRoute(
+         builder: (context) => ParentSettingsScreen(parentUserName: widget.parentName),
+),
+
         );
         break;
     }

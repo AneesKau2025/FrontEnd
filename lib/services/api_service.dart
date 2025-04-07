@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String baseUrl = "http://192.168.31.164:8000/api"; // <-- تأكدي من صحة الرابط
+  final String baseUrl = "https://back-end-production-c810.up.railway.app/"; 
 
   // ✅ إنشاء حساب أب
   Future<Map<String, dynamic>> registerParent({
@@ -12,7 +12,7 @@ class ApiService {
     required String firstName,
     required String lastName,
   }) async {
-    final url = Uri.parse("$baseUrl/parent/");
+    final url = Uri.parse("${baseUrl}api/parent/signup");
 
     try {
       final response = await http.post(
@@ -49,7 +49,7 @@ class ApiService {
     required String username,
     required String password,
   }) async {
-    final url = Uri.parse("$baseUrl/parent/login/");
+    final url = Uri.parse("${baseUrl}api/parent/login/");
 
     try {
       final response = await http.post(
@@ -82,10 +82,11 @@ class ApiService {
       return {"success": false, "message": "❌ لا يمكن الاتصال بالسيرفر!"};
     }
   }
-
+ 
   // ✅ جلب الأطفال المرتبطين بحساب الأب
   Future<List<dynamic>> getChildren() async {
-    final url = Uri.parse("$baseUrl/parent/children/");
+    final url = Uri.parse("${baseUrl}api/parent/children/");
+
 
     try {
       final response = await http.get(url);

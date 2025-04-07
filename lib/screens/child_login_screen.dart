@@ -40,7 +40,8 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ChildHomeScreen(childUserName: username),
+          builder: (context) => ChildHomeScreen(childName: username),
+
         ),
       );
     } else {
