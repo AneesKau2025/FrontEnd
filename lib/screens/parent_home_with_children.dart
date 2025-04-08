@@ -1,17 +1,20 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../services/api_service.dart';
 import '../utils/app_colors.dart';
+import 'add_child_screen.dart';
 import 'parent_child_settings_screen.dart';
 import 'parent_notifications_screen.dart';
-import 'add_child_screen.dart';
 import 'parent_settings_screen.dart';
-import '../services/api_service.dart'; // تأكدي أنك أضفت هذا في أعلى الملف
-
 
 class ParentHomeWithChildren extends StatefulWidget {
   final String parentName;
-  const ParentHomeWithChildren({super.key, required this.parentName});
+  final String token;
+
+  const ParentHomeWithChildren({
+    super.key,
+    required this.parentName,
+    required this.token,
+  });
 
   @override
   _ParentHomeWithChildrenState createState() => _ParentHomeWithChildrenState();
@@ -28,13 +31,13 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
     fetchChildren();
   }
 
- Future<void> fetchChildren() async {
-  final result = await ApiService().getChildren();
-  setState(() {
-    children = result;
-    isLoading = false;
-  });
-}
+  Future<void> fetchChildren() async {
+    final result = await ApiService().getChildren(widget.token);
+    setState(() {
+      children = result;
+      isLoading = false;
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -54,9 +57,8 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
         Navigator.push(
           context,
           MaterialPageRoute(
-         builder: (context) => ParentSettingsScreen(parentUserName: widget.parentName),
-),
-
+            builder: (context) => ParentSettingsScreen(parentUserName: widget.parentName),
+          ),
         );
         break;
     }
@@ -69,7 +71,6 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
       body: SafeArea(
         child: Column(
           children: [
-            // ✅ الهيدر
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -102,8 +103,6 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // ✅ تحميل أو عرض الأطفال
             if (isLoading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (children.isEmpty)
@@ -123,19 +122,18 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
                   itemBuilder: (context, index) {
                     final child = children[index];
                     return GestureDetector(
-                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ParentChildSettingsScreen(
-                            childId: child["id"],
-                            childName: child["childName"],
-                            childUsername: child["childUserName"],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ParentChildSettingsScreen(
+                              childId: child["id"],
+                              childName: child["childName"],
+                              childUsername: child["childUserName"],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-
+                        );
+                      },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         decoration: BoxDecoration(
@@ -159,10 +157,7 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
                   },
                 ),
               ),
-
             const SizedBox(height: 20),
-
-            // ✅ زر إضافة طفل
             Center(
               child: SizedBox(
                 width: 180,
@@ -171,7 +166,9 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => AddChildScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => AddChildScreen(token: widget.token),
+                      ),
                     );
                   },
                   icon: const Icon(Icons.add, color: Colors.black),
@@ -185,12 +182,10 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
                 ),
               ),
             ),
-
             const SizedBox(height: 10),
           ],
         ),
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         selectedItemColor: Colors.black,

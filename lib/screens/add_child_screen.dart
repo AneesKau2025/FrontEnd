@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class AddChildScreen extends StatefulWidget {
-  const AddChildScreen({super.key});
+  final String token;
+
+  const AddChildScreen({super.key, required this.token});
 
   @override
   _AddChildScreenState createState() => _AddChildScreenState();
@@ -20,10 +22,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          "المعلومات الخاصة بتنبيهات النظام",
-          textAlign: TextAlign.right,
-        ),
+        title: Text("المعلومات الخاصة بتنبيهات النظام", textAlign: TextAlign.right),
         content: Text(
           "📌 من عمر 4 إلى 9 سنوات:\n"
           "▪ يتم تنبيهك عن جميع المحتويات الضارة.\n\n"
@@ -48,28 +47,32 @@ class _AddChildScreenState extends State<AddChildScreen> {
     );
   }
 
-  Future<void> _addChild() async {
-    if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ كلمة المرور غير متطابقة")),
-      );
-      return;
-    }
-
-    final result = await ApiService().addChild(
-      childName: _childNameController.text,
-      childUserName: _usernameController.text,
-      password: _passwordController.text,
-    );
-
+Future<void> _addChild() async {
+  if (_passwordController.text != _confirmPasswordController.text) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result["message"])),
+      SnackBar(content: Text("❌ كلمة المرور غير متطابقة")),
     );
-
-    if (result["success"]) {
-      Navigator.pop(context); // يرجع لواجهة الأب
-    }
+    return;
   }
+
+  final result = await ApiService().addChild(
+    childName: _childNameController.text,
+    childUserName: _usernameController.text,
+    email: _emailController.text,
+    age: _ageController.text,
+    password: _passwordController.text,
+    token: widget.token,
+  );
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(result["message"].toString())),
+  );
+
+  if (result["success"]) {
+    Navigator.pop(context);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -88,23 +91,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
-              "إضافة طفل",
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.right,
-            ),
+            Text("إضافة طفل", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold), textAlign: TextAlign.right),
             SizedBox(height: 5),
-            Text(
-              "البيانات الشخصية:",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.right,
-            ),
+            Text("البيانات الشخصية:", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.right),
             SizedBox(height: 20),
-
             _buildLabeledTextField("اسم الطفل", _childNameController, "أدخل اسم الطفل"),
             _buildLabeledTextField("اسم المستخدم للطفل", _usernameController, "أدخل اسم المستخدم"),
             _buildLabeledTextField("البريد الإلكتروني للطفل", _emailController, "أدخل البريد الإلكتروني الخاص بالطفل"),
-
             Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Column(
@@ -117,10 +110,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                         onTap: _showNotificationInfo,
                         child: Icon(Icons.info_outline, color: Colors.black),
                       ),
-                      Text(
-                        "عمر الطفل",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+                      Text("عمر الطفل", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   SizedBox(height: 5),
@@ -128,20 +118,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 ],
               ),
             ),
-
             _buildLabeledTextField("كلمة المرور الخاصة بحساب الطفل", _passwordController, "أدخل كلمة المرور الخاصة بحساب الطفل", isPassword: true),
             _buildLabeledTextField("تأكيد كلمة المرور", _confirmPasswordController, "أدخل تأكيد كلمة المرور", isPassword: true),
-
             SizedBox(height: 30),
-
             Center(
               child: ElevatedButton.icon(
                 onPressed: _addChild,
                 icon: Icon(Icons.add, color: Colors.black),
-                label: Text(
-                  "إضافة طفل",
-                  style: TextStyle(color: Colors.black, fontSize: 16),
-                ),
+                label: Text("إضافة طفل", style: TextStyle(color: Colors.black, fontSize: 16)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFFF0CDEA),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
@@ -159,11 +143,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          label,
-          textAlign: TextAlign.right,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        Text(label, textAlign: TextAlign.right, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         _buildTextField(controller, hint, isPassword: isPassword),
       ],
     );

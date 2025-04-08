@@ -29,12 +29,13 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         SnackBar(content: Text(result["message"])),
       );
 
-      // التنقل للصفحة الرئيسية بعد النجاح
+      // ✅ تمرير التوكن مع اسم المستخدم للصفحة الرئيسية
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => ParentHomeWithChildren(
             parentName: _usernameController.text,
+            token: result["token"],
           ),
         ),
       );
@@ -235,6 +236,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                             color: Colors.black,
                                           ),
                                         ),
+                                        
                                       ],
                                     ),
                                   ),

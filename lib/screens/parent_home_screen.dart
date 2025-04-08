@@ -14,13 +14,6 @@ class ParentHomeScreen extends StatefulWidget {
 class _ParentHomeScreenState extends State<ParentHomeScreen> {
   int _selectedIndex = 0;
 
-  // ✅ قائمة الصفحات
-  final List<Widget> _screens = [
-    HomeContent(), // محتوى الصفحة الرئيسية
-    ParentNotificationsScreen(notifications: []), // صفحة الإشعارات
-    ParentSettingsScreen(), // صفحة الإعدادات
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -29,11 +22,15 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFF8F1EB),
-      body: SafeArea(child: _screens[_selectedIndex]),
+    final List<Widget> _screens = [
+      HomeContent(parentName: widget.parentName),
+      ParentNotificationsScreen(notifications: []),
+      ParentSettingsScreen(parentUserName: widget.parentName),
+    ];
 
-      // ✅ شريط التنقل السفلي
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F1EB),
+      body: SafeArea(child: _screens[_selectedIndex]),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         selectedItemColor: Colors.black,
@@ -52,16 +49,20 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   }
 }
 
-// ✅ محتوى الصفحة الرئيسية
+// ✅ محتوى الصفحة الرئيسية بعد التعديل لاستقبال الاسم
 class HomeContent extends StatelessWidget {
+  final String parentName;
+
+  const HomeContent({super.key, required this.parentName});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Container(
           width: double.infinity,
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          decoration: BoxDecoration(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          decoration: const BoxDecoration(
             color: Color(0xFFA7D7A9),
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(20),
@@ -71,19 +72,19 @@ class HomeContent extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
+              const Text(
                 '👋 أهلاً بك، ',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
               ),
               Text(
-                "أحمد", // اسم المستخدم
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
+                parentName,
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
               ),
             ],
           ),
         ),
-        SizedBox(height: 20),
-        Text("هذه هي الصفحة الرئيسية", style: TextStyle(fontSize: 18)),
+        const SizedBox(height: 20),
+        const Text("هذه هي الصفحة الرئيسية", style: TextStyle(fontSize: 18)),
       ],
     );
   }
