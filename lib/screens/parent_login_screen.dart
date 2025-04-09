@@ -22,6 +22,8 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
       password: _passwordController.text,
     );
 
+    print("توكن الدخول: ${result["token"]}"); // ✅ أطبع التوكن بعد تسجيل الدخول
+
     if (!mounted) return;
 
     if (result["success"]) {
@@ -29,7 +31,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
         SnackBar(content: Text(result["message"])),
       );
 
-      // ✅ تمرير التوكن مع اسم المستخدم للصفحة الرئيسية
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -236,7 +237,6 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                             color: Colors.black,
                                           ),
                                         ),
-                                        
                                       ],
                                     ),
                                   ),

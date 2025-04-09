@@ -47,32 +47,45 @@ class _AddChildScreenState extends State<AddChildScreen> {
     );
   }
 
-Future<void> _addChild() async {
-  if (_passwordController.text != _confirmPasswordController.text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ كلمة المرور غير متطابقة")),
+  Future<void> _addChild() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ كلمة المرور غير متطابقة")),
+      );
+      return;
+    }
+
+    final result = await ApiService().addChild(
+      childName: _childNameController.text,
+      childUserName: _usernameController.text,
+      email: _emailController.text,
+      age: _ageController.text,
+      password: _passwordController.text,
+      token: widget.token,
     );
-    return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result["message"].toString())),
+    );
+
+    if (result["success"]) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("تمت إضافة الطفل بنجاح!"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // يغلق Alert
+                Navigator.pop(context, true); // ✅ يرجع true للصفحة السابقة
+              },
+              child: Text("موافق"),
+            ),
+          ],
+        ),
+      );
+    }
   }
-
-  final result = await ApiService().addChild(
-    childName: _childNameController.text,
-    childUserName: _usernameController.text,
-    email: _emailController.text,
-    age: _ageController.text,
-    password: _passwordController.text,
-    token: widget.token,
-  );
-
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(result["message"].toString())),
-  );
-
-  if (result["success"]) {
-    Navigator.pop(context);
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {

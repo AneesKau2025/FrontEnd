@@ -1,152 +1,159 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
 class ParentSettingsScreen extends StatefulWidget {
-  final String parentUserName; // تمريره عند التنقل للشاشة
+  final String token;
 
-  const ParentSettingsScreen({super.key, required this.parentUserName});
+  const ParentSettingsScreen({super.key, required this.token});
 
   @override
-  _ParentSettingsScreenState createState() => _ParentSettingsScreenState();
+  State<ParentSettingsScreen> createState() => _ParentSettingsScreenState();
 }
 
 class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
-  String parentName = "";
+  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
 
-  final ApiService apiService = ApiService();
+  bool isLoading = true;
 
-  // ✅ حفظ التعديلات
-  void _saveChanges() async {
-    if (parentName.trim().isEmpty) {
-      _showSnack("❌ الاسم لا يمكن أن يكون فارغًا");
-      return;
+  @override
+  void initState() {
+    super.initState();
+    fetchParentInfo();
+  }
+
+  Future<void> fetchParentInfo() async {
+    final data = await ApiService().getParentInfo(widget.token);
+    if (data != null) {
+      setState(() {
+        _nameController.text = data["firstName"] ?? "";
+        _usernameController.text = data["parentUserName"] ?? "";
+        _emailController.text = data["email"] ?? "";
+        isLoading = false;
+      });
     }
+  }
 
-    final result = await apiService.updateParent(
-      parentUserName: widget.parentUserName,
-      newName: parentName,
+  Future<void> _updateParent() async {
+    final result = await ApiService().updateParentInfo(
+      token: widget.token,
+      updatedData: {
+        "firstName": _nameController.text,
+        "parentUserName": _usernameController.text,
+        "email": _emailController.text,
+      },
     );
 
-    _showSnack(result["message"]);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result["message"])),
+    );
   }
 
-  // ✅ حذف الحساب
-  void _deleteAccount() async {
-    bool confirm = await _showConfirmationDialog();
-    if (confirm) {
-      final result = await apiService.deleteParent(widget.parentUserName);
-      _showSnack(result["message"]);
-
-      if (result["success"] && mounted) {
-        Navigator.pushReplacementNamed(context, "/signup");
-      }
-    }
-  }
-
-  // ✅ تسجيل الخروج
-  void _logout() {
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    if (!mounted) return;
     Navigator.pushReplacementNamed(context, "/login");
   }
 
-  // ✅ تأكيد الحذف
+  Future<void> _deleteAccount() async {
+    final confirm = await _showConfirmationDialog();
+    if (!confirm) return;
+
+    final result = await ApiService().deleteParent(widget.token);
+    if (result["success"]) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, "/signup");
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result["message"] ?? "حدث خطأ أثناء حذف الحساب")),
+      );
+    }
+  }
+
   Future<bool> _showConfirmationDialog() async {
     return await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("تأكيد الحذف"),
-        content: const Text("هل أنت متأكد أنك تريد حذف الحساب؟ لا يمكن التراجع عن هذا الإجراء."),
+        content: const Text("هل أنت متأكد أنك تريد حذف الحساب؟"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("إلغاء"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("حذف", style: TextStyle(color: Colors.red)),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("إلغاء")),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("حذف", style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F1EB),
+      appBar: AppBar(title: const Text("الإعدادات")),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text('الإعدادات العامة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  _buildTextField(label: "اسم الوالد", controller: _nameController),
+                  _buildTextField(label: "اسم المستخدم", controller: _usernameController),
+                  _buildTextField(label: "البريد الإلكتروني", controller: _emailController),
+                  const SizedBox(height: 24),
+                  _buildButton("حفظ التعديلات", _updateParent),
+                  _buildButton("تسجيل خروج", _logout, color: Colors.orange),
+                  _buildButton("حذف الحساب", _deleteAccount, color: Colors.red),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildTextField({required String label, required TextEditingController controller}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: TextField(
+              controller: controller,
+              textAlign: TextAlign.right,
+              decoration: const InputDecoration(border: InputBorder.none),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("الإعدادات")),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "الإعدادات العامة",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-
-            TextField(
-              decoration: const InputDecoration(labelText: "اسم الوالد"),
-              onChanged: (value) => setState(() => parentName = value),
-            ),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saveChanges,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text("حفظ التعديلات"),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 20),
-
-            const Text(
-              "إدارة الحساب",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _logout,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text("تسجيل الخروج"),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _deleteAccount,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text("حذف الحساب"),
-              ),
-            ),
-          ],
+  Widget _buildButton(String label, VoidCallback onPressed, {Color color = const Color(0xFFF0CDEA)}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
+        child: Text(label, style: const TextStyle(color: Colors.black, fontSize: 16)),
       ),
     );
   }

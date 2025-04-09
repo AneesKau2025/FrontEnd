@@ -32,7 +32,10 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
   }
 
   Future<void> fetchChildren() async {
+    print("🔐 التوكن المستخدم: ${widget.token}");
     final result = await ApiService().getChildren(widget.token);
+    print("📦 الأطفال المسترجعين: $result");
+
     setState(() {
       children = result;
       isLoading = false;
@@ -57,7 +60,7 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ParentSettingsScreen(parentUserName: widget.parentName),
+            builder: (context) => ParentSettingsScreen(token: widget.token),
           ),
         );
         break;
@@ -128,7 +131,7 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
                           MaterialPageRoute(
                             builder: (context) => ParentChildSettingsScreen(
                               childId: child["id"],
-                              childName: child["childName"],
+                              childName: "${child["firstName"]} ${child["lastName"]}",
                               childUsername: child["childUserName"],
                             ),
                           ),
@@ -147,7 +150,7 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
                             radius: 20,
                           ),
                           title: Text(
-                            child["childName"] ?? "طفل بدون اسم",
+                            "${child["firstName"] ?? ""} ${child["lastName"] ?? ""}",
                             textAlign: TextAlign.right,
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
@@ -163,13 +166,24 @@ class _ParentHomeWithChildrenState extends State<ParentHomeWithChildren> {
                 width: 180,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => AddChildScreen(token: widget.token),
                       ),
                     );
+
+                    if (result == true) {
+                      setState(() {
+                        isLoading = true;
+                      });
+                      await fetchChildren(); // 🔁 إعادة تحميل الأطفال بعد الإضافة
+                      setState(() {
+                        isLoading = false;
+                      });
+ 
+                    }
                   },
                   icon: const Icon(Icons.add, color: Colors.black),
                   label: const Text("إضافة طفل", style: TextStyle(color: Colors.black, fontSize: 16)),
