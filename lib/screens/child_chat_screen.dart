@@ -5,12 +5,16 @@ class ChildChatScreen extends StatefulWidget {
   final String currentUserName; // ✅ اسم الطفل الحالي
   final String friendName;
   final String friendAvatar;
+  final String token; // هذا المتغير مهم جداً
+
 
   const ChildChatScreen({
     super.key,
     required this.currentUserName,
     required this.friendName,
     required this.friendAvatar,
+    required this.token, // أضفنا التوكن هنا
+
   });
 
   @override
@@ -37,22 +41,23 @@ class _ChildChatScreenState extends State<ChildChatScreen> {
   }
 
   Future<void> _blockFriend() async {
-    final result = await ApiService().blockFriend(
-      blockerUserName: widget.currentUserName,
-      blockedUserName: widget.friendName,
-    );
+  final result = await ApiService().blockFriend(
+    friendUserName: widget.friendName,
+    token: widget.token,
+  );
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result["message"])));
-      Navigator.pop(context); // نغلق نافذة التأكيد
-    }
-
-    if (result["success"]) {
-      setState(() {
-        messages.clear();
-      });
-    }
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result["message"])));
+    Navigator.pop(context);
   }
+
+  if (result["success"]) {
+    setState(() {
+      messages.clear();
+    });
+  }
+}
+
 
   void _showBlockDialog() {
     showDialog(

@@ -2,18 +2,20 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class AddFriendScreen extends StatefulWidget {
-  final String currentUsername;
+  final String token; // ✅ أضيفي هذا
+  final String currentUsername; // ✅ وأضيفي هذا
 
-  const AddFriendScreen({super.key, required this.currentUsername});
+  const AddFriendScreen({super.key, required this.token, required this.currentUsername});
 
   @override
   State<AddFriendScreen> createState() => _AddFriendScreenState();
 }
 
+
 class _AddFriendScreenState extends State<AddFriendScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<String> searchResults = [];
-  List<Map<String, dynamic>> friendRequests = [];
+  List<dynamic> friendRequests = [];
 
   @override
   void initState() {
@@ -22,30 +24,27 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   void loadFriendRequests() async {
-    final requests = await ApiService().getFriendRequests(widget.currentUsername);
+    final requests = await ApiService().getFriendRequests(widget.token);
     setState(() {
       friendRequests = requests;
     });
   }
 
   void searchFriends(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        searchResults = [];
-      });
-      return;
-    }
-
-    final results = await ApiService().searchUsers(query);
-    setState(() {
-      searchResults = results;
-    });
+  if (query.isEmpty) {
+    setState(() => searchResults = []);
+    return;
   }
+
+  final results = await ApiService().searchUsers(query, widget.token); // ✅ التوكن
+  setState(() => searchResults = results);
+}
+
 
   void sendFriendRequest(String friendName) async {
     final result = await ApiService().sendFriendRequest(
-      senderUsername: widget.currentUsername,
       receiverUsername: friendName,
+      token: widget.token,
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(result["message"])),
@@ -53,17 +52,27 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   }
 
   void acceptRequest(int index) async {
-    final requestId = friendRequests[index]['id'];
-    final result = await ApiService().respondToFriendRequest(requestId: requestId, accept: true);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
-    loadFriendRequests();
+    final requestId = friendRequests[index]['requestID'];
+    final success = await ApiService().acceptFriendRequest(
+      requestId: requestId,
+      token: widget.token,
+    );
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("✅ تم قبول الطلب")));
+      loadFriendRequests();
+    }
   }
 
   void rejectRequest(int index) async {
-    final requestId = friendRequests[index]['id'];
-    final result = await ApiService().respondToFriendRequest(requestId: requestId, accept: false);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['message'])));
-    loadFriendRequests();
+    final requestId = friendRequests[index]['requestID'];
+    final success = await ApiService().rejectFriendRequest(
+      requestId: requestId,
+      token: widget.token,
+    );
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("❌ تم رفض الطلب")));
+      loadFriendRequests();
+    }
   }
 
   @override

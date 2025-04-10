@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart'; // استدعاء شاشة البداية
+import 'screens/welcome_screen.dart';
+import 'screens/parent_login_screen.dart';
+import 'screens/signup_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized(); // التأكد من تهيئة التطبيق قبل التشغيل
@@ -12,13 +15,20 @@ class AneesApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Anees App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue, // يمكنك تخصيص اللون الأساسي
-        scaffoldBackgroundColor: const Color(0xFFF8F1EB), // لون خلفية عام
-      ),
-      home: const SplashScreen(), // تعيين شاشة البداية
-    );
+  debugShowCheckedModeBanner: false,
+  title: 'Anees App',
+  theme: ThemeData(
+    primarySwatch: Colors.blue,
+    scaffoldBackgroundColor: const Color(0xFFF8F1EB),
+  ),
+  // 🔻 هذه هي الإضافة المهمة:
+  routes: {
+    '/welcome': (context) => const WelcomeScreen(),
+    '/login': (context) => const ParentLoginScreen(),
+    '/signup': (context) => const SignUpScreen(),
+  },
+  home: const SplashScreen(), // تبقى نفسها
+);
+
   }
 }

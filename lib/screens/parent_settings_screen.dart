@@ -37,43 +37,57 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
   }
 
   Future<void> _updateParent() async {
-    final result = await ApiService().updateParentInfo(
-      token: widget.token,
-      updatedData: {
-        "firstName": _nameController.text,
-        "parentUserName": _usernameController.text,
-        "email": _emailController.text,
-      },
-    );
+  final result = await ApiService().updateParentInfo(
+    token: widget.token,
+    updatedData: {
+      "firstName": _nameController.text,
+      "email": _emailController.text,
+    },
+  );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result["message"])),
-    );
-  }
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(result["message"])),
+  );
+}
+
 
   Future<void> _logout() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.clear(); // 🧹 نمسح كل شيء
+
+  if (!mounted) return;
+
+  Navigator.pushNamedAndRemoveUntil(
+    context,
+    '/welcome', // ✅ يرجع لصفحة الترحيب
+    (route) => false, // ⛔ يمنع الرجوع للخلف
+  );
+}
+
+
+
+Future<void> _deleteAccount() async {
+  final confirm = await _showConfirmationDialog();
+  if (!confirm) return;
+
+  final result = await ApiService().deleteParent(widget.token);
+
+  if (result["success"]) {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     if (!mounted) return;
-    Navigator.pushReplacementNamed(context, "/login");
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/welcome', // أو login أو splash حسب ما تبين
+      (route) => false,
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result["message"] ?? "❌ حدث خطأ أثناء حذف الحساب")),
+    );
   }
+}
 
-  Future<void> _deleteAccount() async {
-    final confirm = await _showConfirmationDialog();
-    if (!confirm) return;
-
-    final result = await ApiService().deleteParent(widget.token);
-    if (result["success"]) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, "/signup");
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result["message"] ?? "حدث خطأ أثناء حذف الحساب")),
-      );
-    }
-  }
 
   Future<bool> _showConfirmationDialog() async {
     return await showDialog(

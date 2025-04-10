@@ -24,30 +24,34 @@ class _ChildLoginScreenState extends State<ChildLoginScreen> {
   }
 
   Future<void> _loginChild() async {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+  final username = _usernameController.text.trim();
+  final password = _passwordController.text;
 
-    if (username.isEmpty || password.isEmpty) {
-      _showSnack("❌ جميع الحقول مطلوبة");
-      return;
-    }
-
-    final result = await apiService.loginChild(username: username, password: password);
-
-    if (result["success"]) {
-      _showSnack(result["message"]);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ChildHomeScreen(childName: username),
-
-        ),
-      );
-    } else {
-      _showSnack(result["message"]);
-    }
+  if (username.isEmpty || password.isEmpty) {
+    _showSnack("❌ جميع الحقول مطلوبة");
+    return;
   }
+
+  final result = await apiService.loginChild(username: username, password: password);
+
+  if (result["success"]) {
+    final token = result["token"]; // ✅ استخراج التوكن
+    _showSnack(result["message"]);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChildHomeScreen(
+          childName: username,
+          token: token,
+        ),
+      ),
+    );
+  } else {
+    _showSnack(result["message"]);
+  }
+}
+
 
   @override
   void dispose() {
