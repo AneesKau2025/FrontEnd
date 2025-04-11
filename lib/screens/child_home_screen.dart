@@ -8,7 +8,11 @@ class ChildHomeScreen extends StatefulWidget {
   final String token;
   final String childName;
 
-  const ChildHomeScreen({super.key, required this.token, required this.childName});
+  const ChildHomeScreen({
+    super.key,
+    required this.token,
+    required this.childName,
+  });
 
   @override
   _ChildHomeScreenState createState() => _ChildHomeScreenState();
@@ -71,21 +75,19 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
                         children: [
                           ...friends.map((f) {
                             final profileIcon = f['profileIcon'] ?? 'boy.png';
-
-                            // ✅ ندمج الاسم الأول والاخير، وإذا فاضي نكتب "بدون اسم"
                             final fullName = "${f['firstName'] ?? ''} ${f['lastName'] ?? ''}".trim();
-                            final friendName = fullName.isEmpty ? "بدون اسم" : fullName;
+                            final displayName = fullName.isEmpty ? "بدون اسم" : fullName;
 
                             return _friendAvatar(
                               image: 'assets/images/$profileIcon',
-                              name: friendName,
+                              name: displayName,
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => ChildChatScreen(
                                       currentUserName: widget.childName,
-                                      friendName: friendName,
+                                      friendName: f['childUserName'],
                                       friendAvatar: 'assets/images/$profileIcon',
                                       token: widget.token,
                                     ),
@@ -96,13 +98,13 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
                           }),
                         ],
                       ),
-
                     const SizedBox(height: 10),
-                    _addFriendButton(),
+                    _addFriendButton(), // ✅ هذا الزر تم تعديله عشان يرجّع لنا الأصدقاء
                   ],
                 ),
               ),
               const SizedBox(height: 20),
+              // المحادثات
             ],
           ),
         ),
@@ -160,7 +162,10 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
               currentUsername: widget.childName,
             ),
           ),
-        );
+        ).then((_) {
+          // ✅ بعد الرجوع من صفحة الإضافة، نعيد تحميل الأصدقاء
+          fetchFriends();
+        });
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -173,6 +178,7 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
                 radius: 22,
                 child: Icon(Icons.add, color: Colors.black),
               ),
+              // ❌ الرقم ثابت، ممكن نبدله لاحقًا بعدد الطلبات الحقيقية
               const Positioned(
                 top: 0,
                 right: 0,

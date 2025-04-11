@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class AddFriendScreen extends StatefulWidget {
-  final String token; // ✅ أضيفي هذا
-  final String currentUsername; // ✅ وأضيفي هذا
+  final String token;
+  final String currentUsername;
 
-  const AddFriendScreen({super.key, required this.token, required this.currentUsername});
+  const AddFriendScreen({
+    super.key,
+    required this.token,
+    required this.currentUsername,
+  });
 
   @override
   State<AddFriendScreen> createState() => _AddFriendScreenState();
 }
 
-
 class _AddFriendScreenState extends State<AddFriendScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<String> searchResults = [];
+  List<dynamic> searchResults = [];
   List<dynamic> friendRequests = [];
 
   @override
@@ -30,25 +33,33 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     });
   }
 
-  void searchFriends(String query) async {
+ void searchFriends(String query) async {
   if (query.isEmpty) {
     setState(() => searchResults = []);
     return;
   }
 
-  final results = await ApiService().searchUsers(query, widget.token); // ✅ التوكن
+  final results = await ApiService().searchUsers(widget.token, query);
+  
+  // ✅ اطبعي النتيجة في الـ console
+  print("🔍 نتائج البحث:");
+  print(results); 
+
   setState(() => searchResults = results);
 }
 
 
-  void sendFriendRequest(String friendName) async {
+  void sendFriendRequest(String receiverUsername) async {
     final result = await ApiService().sendFriendRequest(
-      receiverUsername: friendName,
+      receiverUsername: receiverUsername,
       token: widget.token,
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(result["message"])),
     );
+    _searchController.clear();
+    setState(() => searchResults = []);
+    loadFriendRequests();
   }
 
   void acceptRequest(int index) async {
@@ -58,7 +69,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       token: widget.token,
     );
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("✅ تم قبول الطلب")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("✅ تم قبول الطلب")),
+      );
       loadFriendRequests();
     }
   }
@@ -70,7 +83,9 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       token: widget.token,
     );
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("❌ تم رفض الطلب")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ تم رفض الطلب")),
+      );
       loadFriendRequests();
     }
   }
@@ -112,12 +127,21 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                   if (searchResults.isNotEmpty) ...[
                     const Text("نتائج البحث:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
-                    ...searchResults.map((friendName) => ListTile(
-                          title: Text(friendName, style: const TextStyle(fontSize: 16)),
-                          trailing: ElevatedButton(
-                            onPressed: () => sendFriendRequest(friendName),
-                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC4E3B4)),
-                            child: const Text("إرسال طلب", style: TextStyle(color: Colors.black)),
+                    ...searchResults.map((user) => Card(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: AssetImage("assets/images/${user['profileIcon']}"),
+                            ),
+                            title: Text("${user['firstName']} ${user['lastName']}"),
+                            subtitle: Text(user['childUserName']),
+                            trailing: ElevatedButton(
+                              onPressed: () => sendFriendRequest(user['childUserName']),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFC4E3B4),
+                              ),
+                              child: const Text("إرسال طلب", style: TextStyle(color: Colors.black)),
+                            ),
                           ),
                         )),
                   ],
@@ -130,8 +154,11 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       return Card(
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         child: ListTile(
-                          leading: const CircleAvatar(child: Icon(Icons.person)),
-                          title: Text(request["senderUserName"], style: const TextStyle(fontSize: 16)),
+                          leading: CircleAvatar(
+                            backgroundImage: AssetImage("assets/images/${request['senderProfileIcon']}"),
+                          ),
+                          title: Text("${request['senderFirstName']} ${request['senderLastName']}"),
+                          subtitle: Text(request['senderUserName']),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

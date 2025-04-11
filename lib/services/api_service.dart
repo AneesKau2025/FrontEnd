@@ -4,8 +4,11 @@ import 'package:http/http.dart' as http;
 class ApiService {
   final String baseUrl = "https://back-end-production-c810.up.railway.app/"; 
 
-  // ✅ إنشاء حساب أب
-  // DONEE !!!!!
+
+///////////////////Parent Section ////////////////////////////
+
+///#####################انشاء حساب للاب######################
+
   Future<Map<String, dynamic>> registerParent({
     required String username,
     required String email,
@@ -45,8 +48,8 @@ class ApiService {
     }
   }
 
-  // ✅ تسجيل دخول الأب
-   // DONEE !!!!!
+
+///#####################اتسجيل دخول للاب######################
   Future<Map<String, dynamic>> loginParent({
   required String username,
   required String password,
@@ -85,10 +88,10 @@ class ApiService {
   }
 }
 
- /////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
-  // ✅ جلب الأطفال المرتبطين بحساب الأب
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+///#####################جلب الاطفال المرتبطين بالاب######################
+
 Future<List<dynamic>> getChildren(String token) async {
   final url = Uri.parse("${baseUrl}api/parent/children/");
 
@@ -114,12 +117,10 @@ Future<List<dynamic>> getChildren(String token) async {
     return [];
   }
 }
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- /// اضافه طفل 
- // DONEE !!!!!
+///#####################اضافه طفل عن طريق الاب ######################
+
 Future<Map<String, dynamic>> addChild({
   required String childName,
   required String childUserName,
@@ -162,11 +163,7 @@ Future<Map<String, dynamic>> addChild({
   }
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
-// ✅ تعديل بيانات الطفل
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+///#####################تعديل بيانات الطفل عن طريق الاب ######################
 
 Future<Map<String, dynamic>> updateChild({
   required int childId,
@@ -197,13 +194,8 @@ Future<Map<String, dynamic>> updateChild({
     return {"success": false, "message": "❌ خطأ في الاتصال بالسيرفر"};
   }
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
-   // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-// ✅ حذف الطفل
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
+///#####################حذف الطفل عن طريق الاب ######################
 Future<Map<String, dynamic>> deleteChild(int childId) async {
   final url = Uri.parse("${baseUrl}api/child/$childId/");
 
@@ -222,11 +214,8 @@ Future<Map<String, dynamic>> deleteChild(int childId) async {
     return {"success": false, "message": "❌ خطأ في الاتصال بالسيرفر"};
   }
 }
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- /// تعديل البيانات للاب 
-// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+///#####################تعديل بيانات الاب ######################
 
 Future<Map<String, dynamic>> updateParent({
   required String token,
@@ -252,11 +241,8 @@ Future<Map<String, dynamic>> updateParent({
     return {"success": false, "message": "❌ خطأ في الاتصال بالسيرفر"};
   }
 }
-  // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- /// حذف حساب الاب
- // DONEE !!!!!
+///#####################حذف حساب الاب ######################
 Future<Map<String, dynamic>> deleteParent(String token) async {
   final url = Uri.parse("${baseUrl}api/parent/delete");
   try {
@@ -280,10 +266,96 @@ Future<Map<String, dynamic>> deleteParent(String token) async {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
-// ✅ تسجيل دخول طفل
- // DONEE !!!!!
+///#####################تعديل بيانات الاب 22 ######################
+
+
+Future<Map<String, dynamic>> updateParentInfo({
+  required String token,
+  required Map<String, dynamic> updatedData,
+}) async {
+  final url = Uri.parse("${baseUrl}api/parent/settings");
+
+  try {
+    final response = await http.put(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(updatedData),
+    );
+
+    print("🟠 update response: ${response.statusCode}");
+    print("🟠 response body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return {"success": true, "message": "✅ تم تحديث البيانات بنجاح"};
+    } else {
+      // نحاول نفك الـ body كـ JSON، وإذا فشل نرجع الرد كـ نص
+      try {
+        final decoded = jsonDecode(response.body);
+        return {
+          "success": false,
+          "message": decoded['detail'] ?? "❌ فشل في تحديث البيانات"
+        };
+      } catch (e) {
+        return {
+          "success": false,
+          "message": "❌ فشل في تحديث البيانات: ${response.body}"
+        };
+      }
+    }
+  } catch (e) {
+    print("❌ خطأ في الاتصال بالسيرفر: $e");
+    return {"success": false, "message": "❌ لا يمكن الاتصال بالسيرفر"};
+  }
+} 
+
+
+///#####################جلب معلومات الاب ######################
+
+  Future<Map<String, dynamic>?> getParentInfo(String token) async {
+    final url = Uri.parse("${baseUrl}api/parent/info");
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        print("❌ فشل في جلب معلومات الأب: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("❌ خطأ في الاتصال: $e");
+      return null;
+    }
+  }
+
+///#####################تسجيل خروج الاب ######################
+Future<void> logoutParent() async {
+  final url = Uri.parse("${baseUrl}api/parent/logout");
+
+  try {
+    final response = await http.post(url);
+    print("📤 تسجيل خروج من السيرفر (اختياري): ${response.body}");
+  } catch (e) {
+    print("❌ فشل في الاتصال بالـ logout: $e");
+  }
+}
+
+
+
+///////////////////Child Section ////////////////////////////
+
+
+///#####################تسجيل دخول للطفل  ######################
+
+
 Future<Map<String, dynamic>> loginChild({
   required String username,
   required String password,
@@ -330,96 +402,37 @@ final url = Uri.parse("${baseUrl}api/child/login"); // ✅
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- /// 
-  // ✅ جلب معلومات الأب/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
-  Future<Map<String, dynamic>?> getParentInfo(String token) async {
-    final url = Uri.parse("${baseUrl}api/parent/info");
+///#####################تحديث معلومات الطفل ######################
 
-    try {
-      final response = await http.get(
-        url,
-        headers: {"Authorization": "Bearer $token"},
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data;
-      } else {
-        print("❌ فشل في جلب معلومات الأب: ${response.body}");
-        return null;
-      }
-    } catch (e) {
-      print("❌ خطأ في الاتصال: $e");
-      return null;
-    }
-  }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
-  // ✅ تحديث معلومات الأب (الاسم، البريد، اسم المستخدم)
-Future<Map<String, dynamic>> updateParentInfo({
+Future<bool> updateChildSettings({
   required String token,
-  required Map<String, dynamic> updatedData,
+  required Map<String, dynamic> settings,
 }) async {
-  final url = Uri.parse("${baseUrl}api/parent/settings");
+  final url = Uri.parse('${baseUrl}api/child/settings');
 
-  try {
-    final response = await http.put(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-      body: jsonEncode(updatedData),
-    );
+  final response = await http.put(
+    url,
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode(settings),
+  );
 
-    print("🟠 update response: ${response.statusCode}");
-    print("🟠 response body: ${response.body}");
-
-    if (response.statusCode == 200) {
-      return {"success": true, "message": "✅ تم تحديث البيانات بنجاح"};
-    } else {
-      // نحاول نفك الـ body كـ JSON، وإذا فشل نرجع الرد كـ نص
-      try {
-        final decoded = jsonDecode(response.body);
-        return {
-          "success": false,
-          "message": decoded['detail'] ?? "❌ فشل في تحديث البيانات"
-        };
-      } catch (e) {
-        return {
-          "success": false,
-          "message": "❌ فشل في تحديث البيانات: ${response.body}"
-        };
-      }
-    }
-  } catch (e) {
-    print("❌ خطأ في الاتصال بالسيرفر: $e");
-    return {"success": false, "message": "❌ لا يمكن الاتصال بالسيرفر"};
-  }
+  return response.statusCode == 200;
 }
 
 
 
+///////////////////Friend Section ////////////////////////////
 
 
-/////////////////////////////////////////////////////////
-Future<void> logoutParent() async {
-  final url = Uri.parse("${baseUrl}api/parent/logout");
-
-  try {
-    final response = await http.post(url);
-    print("📤 تسجيل خروج من السيرفر (اختياري): ${response.body}");
-  } catch (e) {
-    print("❌ فشل في الاتصال بالـ logout: $e");
-  }
-}
+///####################جلب الاصدقاء للطفل ######################
 
 
-///////// FRIEND !!!!!!!!!!!!@@@@@@@@@@//////////////////////////////
 Future<List<dynamic>> getChildFriends(String token) async {
   final url = Uri.parse("${baseUrl}api/child/friends");
+  
 
   try {
     final response = await http.get(
@@ -446,13 +459,13 @@ Future<List<dynamic>> getChildFriends(String token) async {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
+///#####################ارسال طلب صداقه ######################
+
 Future<Map<String, dynamic>> sendFriendRequest({
   required String receiverUsername,
   required String token,
 }) async {
-  final url = Uri.parse('${baseUrl}child/friend/request');
+  final url = Uri.parse('${baseUrl}api/child/friend/request');
 
   try {
     final response = await http.post(
@@ -479,39 +492,43 @@ Future<Map<String, dynamic>> sendFriendRequest({
     return {"success": false, "message": "❌ خطأ في الاتصال بالسيرفر"};
   }
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
-Future<List<String>> searchUsers(String query, String token) async {
-  final url = Uri.parse('${baseUrl}api/child/search/?q=$query');
+
+
+///#####################بحث الاصدقاء  ######################
+///
+///
+Future<List<dynamic>> searchUsers(String token, String query) async {
+  final url = Uri.parse('${baseUrl}api/child/search?q=$query');
 
   try {
     final response = await http.get(
       url,
       headers: {
-        "Authorization": "Bearer $token", // 🟢 أضفنا التوكن هنا
+        "Authorization": "Bearer $token",
         "Content-Type": "application/json"
       },
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.cast<String>();
+      final body = jsonDecode(response.body);
+      return body['data'] ?? [];
     } else {
       print("⚠️ خطأ أثناء البحث: ${response.statusCode} - ${response.body}");
       return [];
     }
   } catch (e) {
-    print("❌ استث\ناء أثناء البحث: $e");
+    print("❌ استثناء أثناء البحث: $e");
     return [];
   }
 }
 
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
+
+///#####################جلب طلب صداقه ######################
+
 Future<List<dynamic>> getFriendRequests(String token) async {
-  final url = Uri.parse('${baseUrl}child/friend/request');
+  final url = Uri.parse('${baseUrl}api/child/friend/request');
 
   try {
     final response = await http.get(
@@ -532,8 +549,11 @@ Future<List<dynamic>> getFriendRequests(String token) async {
     return [];
   }
 }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
+
+
+
+///#####################استجابه طلب صداقه ######################
+
 Future<Map<String, dynamic>> respondToFriendRequest({
   required int requestId,
   required bool accept,
@@ -557,11 +577,15 @@ Future<Map<String, dynamic>> respondToFriendRequest({
     return {"success": false, "message": "خطأ في الاتصال"};
   }
 }
+
+
+///#####################قبول طلب صداقه ######################
+
 Future<bool> acceptFriendRequest({
   required int requestId,
   required String token,
 }) async {
-  final url = Uri.parse('${baseUrl}child/friend/accept/$requestId');
+  final url = Uri.parse('${baseUrl}api/child/friend/accept/$requestId');
 
   try {
     final response = await http.post(
@@ -577,11 +601,14 @@ Future<bool> acceptFriendRequest({
     return false;
   }
 }
+
+///#####################رفض طلب صداقه ######################
+
 Future<bool> rejectFriendRequest({
   required int requestId,
   required String token,
 }) async {
-  final url = Uri.parse('${baseUrl}child/friend/reject/$requestId');
+  final url = Uri.parse('${baseUrl}api/child/friend/reject/$requestId');
 
   try {
     final response = await http.post(
@@ -598,13 +625,15 @@ Future<bool> rejectFriendRequest({
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
- ///
+
+///#####################حظر صديق ######################
+
+
 Future<Map<String, dynamic>> blockFriend({
   required String friendUserName,
   required String token,
 }) async {
-  final url = Uri.parse("${baseUrl}child/friend/block/$friendUserName");
+  final url = Uri.parse("${baseUrl}api/child/friend/block/$friendUserName");
 
   try {
     final response = await http.post(
@@ -626,25 +655,4 @@ Future<Map<String, dynamic>> blockFriend({
     return {"success": false, "message": "❌ خطأ في الاتصال بالسيرفر"};
   }
 
-}
-
-
-
-Future<bool> updateChildSettings({
-  required String token,
-  required Map<String, dynamic> settings,
-}) async {
-  final url = Uri.parse('${baseUrl}api/child/settings');
-
-  final response = await http.put(
-    url,
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    },
-    body: jsonEncode(settings),
-  );
-
-  return response.statusCode == 200;
-}
-}
+} }
