@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import 'child_chat_screen.dart';
 import 'add_friend_screen.dart';
@@ -21,11 +22,21 @@ class ChildHomeScreen extends StatefulWidget {
 class _ChildHomeScreenState extends State<ChildHomeScreen> {
   List<dynamic> friends = [];
   bool isLoading = true;
+  String? childAvatar;
 
   @override
   void initState() {
     super.initState();
-    fetchFriends();
+    loadChildAvatar(); // ✅ جلب صورة الطفل
+    fetchFriends();    // ✅ جلب قائمة الأصدقاء
+  }
+
+  Future<void> loadChildAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedAvatar = prefs.getString('child_avatar') ?? 'boy.png';
+    setState(() {
+      childAvatar = savedAvatar;
+    });
   }
 
   Future<void> fetchFriends() async {
@@ -58,7 +69,19 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("👋 أهلاً بك، ${widget.childName}!", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundImage: AssetImage('assets/images/${childAvatar ?? "boy.png"}'),
+                          radius: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "👋 أهلاً بك، ${widget.childName}!",
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 5),
                     const Text("قائمة أصدقائك", style: TextStyle(fontSize: 16, color: Colors.black54)),
                     const SizedBox(height: 10),
@@ -72,39 +95,36 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
                         spacing: 10,
                         runSpacing: 10,
                         alignment: WrapAlignment.end,
-                        children: [
-                          ...friends.map((f) {
-                            final profileIcon = f['profileIcon'] ?? 'boy.png';
-                            final fullName = "${f['firstName'] ?? ''} ${f['lastName'] ?? ''}".trim();
-                            final displayName = fullName.isEmpty ? "بدون اسم" : fullName;
+                        children: friends.map((f) {
+                          final profileIcon = f['profileIcon'] ?? 'boy.png';
+                          final fullName = "${f['firstName'] ?? ''} ${f['lastName'] ?? ''}".trim();
+                          final displayName = fullName.isEmpty ? "بدون اسم" : fullName;
 
-                            return _friendAvatar(
-                              image: 'assets/images/$profileIcon',
-                              name: displayName,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ChildChatScreen(
-                                      currentUserName: widget.childName,
-                                      friendName: f['childUserName'],
-                                      friendAvatar: 'assets/images/$profileIcon',
-                                      token: widget.token,
-                                    ),
+                          return _friendAvatar(
+                            image: 'assets/images/$profileIcon',
+                            name: displayName,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChildChatScreen(
+                                    currentUserName: widget.childName,
+                                    friendName: f['childUserName'],
+                                    friendAvatar: 'assets/images/$profileIcon',
+                                    token: widget.token,
                                   ),
-                                );
-                              },
-                            );
-                          }),
-                        ],
+                                ),
+                              );
+                            },
+                          );
+                        }).toList(),
                       ),
                     const SizedBox(height: 10),
-                    _addFriendButton(), // ✅ هذا الزر تم تعديله عشان يرجّع لنا الأصدقاء
+                    _addFriendButton(),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
-              // المحادثات
             ],
           ),
         ),
@@ -120,9 +140,14 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
                   childName: widget.childName,
                   childAge: 9,
                   remainingTime: 120,
+                  token: widget.token,
                 ),
               ),
-            );
+            ).then((_) {
+              // ✅ تحديث الصورة بعد الرجوع من الإعدادات
+              loadChildAvatar();
+              fetchFriends();
+            });
           }
         },
         items: const [
@@ -163,7 +188,6 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
             ),
           ),
         ).then((_) {
-          // ✅ بعد الرجوع من صفحة الإضافة، نعيد تحميل الأصدقاء
           fetchFriends();
         });
       },
@@ -178,7 +202,6 @@ class _ChildHomeScreenState extends State<ChildHomeScreen> {
                 radius: 22,
                 child: Icon(Icons.add, color: Colors.black),
               ),
-              // ❌ الرقم ثابت، ممكن نبدله لاحقًا بعدد الطلبات الحقيقية
               const Positioned(
                 top: 0,
                 right: 0,

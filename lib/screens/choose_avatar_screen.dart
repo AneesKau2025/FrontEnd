@@ -33,10 +33,13 @@ class ChooseAvatarScreen extends StatelessWidget {
           ),
           itemCount: avatarImages.length,
           itemBuilder: (context, index) {
+            final fullPath = avatarImages[index];
+            final fileName = fullPath.split('/').last; // 👈 نأخذ اسم الصورة فقط
+
             return GestureDetector(
               onTap: () {
-                onAvatarSelected(avatarImages[index]); // ✅ حفظ الصورة المختارة
-                Navigator.pop(context); // ✅ الرجوع للصفحة السابقة
+                onAvatarSelected(fileName); // 👈 نرسل فقط الاسم
+                Navigator.pop(context);     // 👈 نرجع بعد التحديد
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -44,11 +47,11 @@ class ChooseAvatarScreen extends StatelessWidget {
                   border: Border.all(color: Colors.purple, width: 3),
                 ),
                 child: ClipOval(
-                  child: FittedBox( // ✅ يضمن أن كل الصور ستكون بنفس الحجم بالضبط
+                  child: FittedBox(
                     fit: BoxFit.cover,
                     child: Image.asset(
-                      avatarImages[index],
-                      width: 100, // ✅ حجم موحد لكل الصور داخل الدائرة
+                      fullPath,
+                      width: 100,
                       height: 100,
                     ),
                   ),

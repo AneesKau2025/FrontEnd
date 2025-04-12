@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 import 'choose_avatar_screen.dart';
 
 class ChildSettingScreen extends StatefulWidget {
   final String childName;
   final int childAge;
   final int remainingTime;
+  final String token;
 
   const ChildSettingScreen({
     super.key,
     required this.childName,
     required this.childAge,
     required this.remainingTime,
+    required this.token,
   });
 
   @override
@@ -18,7 +22,23 @@ class ChildSettingScreen extends StatefulWidget {
 }
 
 class _ChildSettingScreenState extends State<ChildSettingScreen> {
-  String _selectedAvatar = 'assets/images/girl_1.png'; // ✅ الصورة الافتراضية
+  String _selectedAvatar = 'girl_1.png'; // اسم الصورة فقط بدون المسار
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedAvatar(); // نجيب الصورة من التخزين المحلي عند التشغيل
+  }
+
+  Future<void> _loadSavedAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedAvatar = prefs.getString('child_avatar');
+    if (savedAvatar != null) {
+      setState(() {
+        _selectedAvatar = savedAvatar;
+      });
+    }
+  }
 
   void _openAvatarSelection() {
     Navigator.push(
@@ -27,7 +47,7 @@ class _ChildSettingScreenState extends State<ChildSettingScreen> {
         builder: (context) => ChooseAvatarScreen(
           onAvatarSelected: (selectedImage) {
             setState(() {
-              _selectedAvatar = selectedImage; // ✅ تحديث الصورة المختارة
+              _selectedAvatar = selectedImage; // فقط الاسم مثل boy.png
             });
           },
         ),
@@ -35,45 +55,34 @@ class _ChildSettingScreenState extends State<ChildSettingScreen> {
     );
   }
 
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("تسجيل الخروج", style: TextStyle(fontWeight: FontWeight.bold)),
-          content: const Text(
-            "هل أنت متأكد أنك تريد تسجيل الخروج من هذا الحساب؟\n\n"
-            "إذا كنت متأكدًا، اضغط على 'تأكيد تسجيل الخروج'.\n"
-            "إذا كنت ترغب في التراجع، اضغط على 'إلغاء'.",
-            textAlign: TextAlign.center,
-          ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("إلغاء", style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context); // ✅ العودة للشاشة السابقة
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text("تأكيد تسجيل الخروج", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
+  Future<void> _saveChanges() async {
+    final result = await ApiService().updateChildInfo(
+      token: widget.token,
+      updatedData: {
+        "profileIcon": _selectedAvatar,
       },
     );
+
+    if (result["success"] == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('child_avatar', _selectedAvatar);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("✅ تم حفظ التعديلات بنجاح")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ فشل في الحفظ")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F1EB), // ✅ نفس الخلفية القديمة
+      backgroundColor: const Color(0xFFF8F1EB),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFC4E3B4), // ✅ لون مطابق للتصميم
+        backgroundColor: const Color(0xFFC4E3B4),
         title: const Text("الإعدادات", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
@@ -82,24 +91,23 @@ class _ChildSettingScreenState extends State<ChildSettingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ✅ صورة الطفل + زر التغيير
             GestureDetector(
-              onTap: _openAvatarSelection, // ✅ عند الضغط يتم فتح شاشة اختيار الصورة
+              onTap: _openAvatarSelection,
               child: Column(
                 children: [
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.purple, width: 3), // ✅ نفس لون الإطار القديم
+                      border: Border.all(color: Colors.purple, width: 3),
                     ),
                     child: ClipOval(
                       child: Padding(
-                        padding: const EdgeInsets.all(5), // ✅ مسافة صغيرة لضبط حجم الصورة داخل الدائرة
+                        padding: const EdgeInsets.all(5),
                         child: Image.asset(
-                          _selectedAvatar,
-                          width: 100, // ✅ ضبط الحجم بحيث يكون مثاليًا
+                          'assets/images/$_selectedAvatar',
+                          width: 100,
                           height: 100,
-                          fit: BoxFit.cover, // ✅ يجعل الصورة تملأ الدائرة بدون مشاكل
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
@@ -109,10 +117,7 @@ class _ChildSettingScreenState extends State<ChildSettingScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // ✅ اسم الطفل
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -126,15 +131,12 @@ class _ChildSettingScreenState extends State<ChildSettingScreen> {
                       suffixIcon: const Icon(Icons.edit, color: Colors.black54),
                     ),
                     controller: TextEditingController(text: widget.childName),
-                    readOnly: true, // ✅ لأن الاسم لا يمكن تعديله
+                    readOnly: true,
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 15),
-
-            // ✅ عمر الطفل
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
               decoration: BoxDecoration(
@@ -143,10 +145,7 @@ class _ChildSettingScreenState extends State<ChildSettingScreen> {
               ),
               child: Text("${widget.childAge} سنوات", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-
             const SizedBox(height: 20),
-
-            // ✅ الوقت المتبقي
             Column(
               children: [
                 const Icon(Icons.notifications, size: 40, color: Colors.black54),
@@ -156,27 +155,20 @@ class _ChildSettingScreenState extends State<ChildSettingScreen> {
                 ),
               ],
             ),
-
             const SizedBox(height: 30),
-
-            // ✅ أزرار حفظ التعديلات وتسجيل الخروج
             ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("تم حفظ التعديلات بنجاح")),
-                );
-              },
+              onPressed: _saveChanges,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
               ),
               child: const Text("حفظ التعديلات", style: TextStyle(color: Colors.white, fontSize: 16)),
             ),
-
             const SizedBox(height: 10),
-
             ElevatedButton(
-              onPressed: _showLogoutDialog,
+              onPressed: () {
+                Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
@@ -186,13 +178,11 @@ class _ChildSettingScreenState extends State<ChildSettingScreen> {
           ],
         ),
       ),
-
-      // ✅ شريط التنقل السفلي مطابق للتصميم القديم
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.grey,
-        currentIndex: 2, // ✅ يجعل "الإعدادات" مفعلة
+        currentIndex: 2,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "الصفحة الرئيسية"),
           BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: "أنيـس"),

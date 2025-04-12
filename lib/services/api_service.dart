@@ -93,7 +93,7 @@ class ApiService {
 ///#####################جلب الاطفال المرتبطين بالاب######################
 
 Future<List<dynamic>> getChildren(String token) async {
-  final url = Uri.parse("${baseUrl}api/parent/children/");
+  final url = Uri.parse("${baseUrl}api/parent/children");
 
   try {
     final response = await http.get(
@@ -422,6 +422,40 @@ Future<bool> updateChildSettings({
   return response.statusCode == 200;
 }
 
+///#####################تحديث معلومات الطفل 2  ######################
+
+Future<Map<String, dynamic>> updateChildInfo({
+  required String token,
+  required Map<String, dynamic> updatedData,
+}) async {
+  final url = Uri.parse("${baseUrl}api/child/settings");
+
+  try {
+    final response = await http.put(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(updatedData),
+    );
+
+    if (response.statusCode == 200) {
+      return {"success": true};
+    } else {
+      final body = jsonDecode(response.body);
+      return {
+        "success": false,
+        "message": body['detail'] ?? "فشل التحديث"
+      };
+    }
+  } catch (e) {
+    return {
+      "success": false,
+      "message": "خطأ في الاتصال بالسيرفر"
+    };
+  }
+}
 
 
 ///////////////////Friend Section ////////////////////////////
