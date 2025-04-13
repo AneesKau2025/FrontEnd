@@ -25,7 +25,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
     final List<Widget> _screens = [
       HomeContent(parentName: widget.parentName),
       ParentNotificationsScreen(notifications: []),
-      ParentSettingsScreen(parentUserName: widget.parentName),
+      ParentSettingsScreen(token: widget.parentName,),
     ];
 
     return Scaffold(
